@@ -109,14 +109,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Quiz Interactivity Logic
     function setupQuizInteractivity(quizType) {
+        const checkBtn = document.getElementById('check-answers-btn');
+        
+        let retakeBtn = null;
+        if (checkBtn) {
+            retakeBtn = document.createElement('button');
+            retakeBtn.id = 'retake-quiz-btn';
+            retakeBtn.className = 'mt-4 hidden';
+            retakeBtn.style.marginLeft = '10px';
+            retakeBtn.style.backgroundColor = '#64748b';
+            retakeBtn.textContent = '재시험 보기';
+            checkBtn.parentNode.insertBefore(retakeBtn, checkBtn.nextSibling);
+            
+            retakeBtn.addEventListener('click', () => {
+                document.querySelectorAll('.quiz-question').forEach(q => {
+                    if (q.dataset.isCorrect === 'true') {
+                        q.style.display = 'none'; // 정답인 문제는 숨김
+                    } else {
+                        // 틀린 문제는 초기화
+                        q.querySelectorAll('.quiz-option').forEach(o => {
+                            o.classList.remove('selected', 'correct', 'wrong');
+                        });
+                        const input = q.querySelector('input[type="text"]');
+                        if (input) {
+                            input.value = '';
+                            input.classList.remove('correct-input', 'wrong-input');
+                        }
+                        const explanation = q.querySelector('.explanation');
+                        if (explanation) explanation.classList.add('hidden');
+                    }
+                });
+                checkBtn.disabled = false;
+                retakeBtn.classList.add('hidden');
+            });
+        }
+
         if (quizType.includes('객관식') || quizType.includes('O/X')) {
             const options = document.querySelectorAll('.quiz-option');
-            const checkBtn = document.getElementById('check-answers-btn');
-            
             options.forEach(opt => {
                 opt.addEventListener('click', function() {
+                    const qElement = this.closest('.quiz-question');
+                    if (qElement && qElement.dataset.isCorrect === 'true') return; // 이미 맞춘 문제는 클릭 불가
+
                     const qId = this.dataset.question;
-                    // Remove selected from others in same question
                     document.querySelectorAll(`.quiz-option[data-question="${qId}"]`).forEach(o => o.classList.remove('selected'));
                     this.classList.add('selected');
                 });
@@ -124,62 +159,85 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (checkBtn) {
                 checkBtn.addEventListener('click', () => {
-                    let allCorrect = true;
                     document.querySelectorAll('.quiz-question').forEach(q => {
-                        const qId = q.dataset.id;
-                        const selected = q.querySelector('.quiz-option.selected');
+                        if (q.dataset.isCorrect === 'true') return; // 이미 맞춘 문제는 스킵
+
                         const correctVal = q.dataset.answer;
+                        const selected = q.querySelector('.quiz-option.selected');
                         const explanation = q.querySelector('.explanation');
                         
+                        let isThisCorrect = false;
                         if (selected) {
                             if (selected.dataset.value === correctVal) {
                                 selected.classList.add('correct');
+                                isThisCorrect = true;
                             } else {
                                 selected.classList.add('wrong');
-                                // Highlight correct one
-                                q.querySelector(`.quiz-option[data-value="${correctVal}"]`).classList.add('correct');
-                                allCorrect = false;
+                                const correctOpt = q.querySelector(`.quiz-option[data-value="${correctVal}"]`);
+                                if(correctOpt) correctOpt.classList.add('correct');
                             }
                         } else {
-                            allCorrect = false;
+                            const correctOpt = q.querySelector(`.quiz-option[data-value="${correctVal}"]`);
+                            if(correctOpt) correctOpt.classList.add('correct');
                         }
-                        explanation.classList.remove('hidden');
+
+                        if (isThisCorrect) {
+                            q.dataset.isCorrect = 'true';
+                        }
+
+                        if (explanation) explanation.classList.remove('hidden');
                     });
                     
-                    if (allCorrect) showToast('모든 정답을 맞추셨습니다! 🎉');
-                    else showToast('틀린 문제가 있습니다. 해설을 확인해 보세요.', true);
+                    const anyWrong = Array.from(document.querySelectorAll('.quiz-question')).some(q => q.dataset.isCorrect !== 'true');
                     
+                    if (!anyWrong) {
+                        showToast('모든 정답을 맞추셨습니다! 🎉');
+                        if (retakeBtn) retakeBtn.classList.add('hidden');
+                    } else {
+                        showToast('틀린 문제가 있습니다. 해설을 확인해 보세요.', true);
+                        if (retakeBtn) retakeBtn.classList.remove('hidden');
+                    }
                     checkBtn.disabled = true;
                 });
             }
         } else if (quizType.includes('주관식')) {
-            const checkBtn = document.getElementById('check-answers-btn');
             if (checkBtn) {
                 checkBtn.addEventListener('click', () => {
-                    let allCorrect = true;
                     document.querySelectorAll('.quiz-question').forEach(q => {
+                        if (q.dataset.isCorrect === 'true') return; // 이미 맞춘 문제는 스킵
+
                         const input = q.querySelector('input[type="text"]');
                         const correctVal = q.dataset.answer;
                         const explanation = q.querySelector('.explanation');
                         
-                        // Simple similarity check for Subjective
+                        let isThisCorrect = false;
                         if (input && input.value.trim().length > 0) {
                             if (correctVal.includes(input.value.trim()) || input.value.trim().includes(correctVal.split(' ')[0])) {
                                 input.classList.add('correct-input');
+                                isThisCorrect = true;
                             } else {
                                 input.classList.add('wrong-input');
-                                allCorrect = false;
                             }
                         } else {
-                            input.classList.add('wrong-input');
-                            allCorrect = false;
+                            if (input) input.classList.add('wrong-input');
                         }
-                        explanation.classList.remove('hidden');
+
+                        if (isThisCorrect) {
+                            q.dataset.isCorrect = 'true';
+                        }
+
+                        if (explanation) explanation.classList.remove('hidden');
                     });
                     
-                    if (allCorrect) showToast('훌륭합니다! 핵심 키워드를 잘 맞추셨네요! 🎉');
-                    else showToast('해설을 확인하여 정답을 알아보세요.', true);
-                    
+                    const anyWrong = Array.from(document.querySelectorAll('.quiz-question')).some(q => q.dataset.isCorrect !== 'true');
+
+                    if (!anyWrong) {
+                        showToast('훌륭합니다! 핵심 키워드를 모두 맞추셨네요! 🎉');
+                        if (retakeBtn) retakeBtn.classList.add('hidden');
+                    } else {
+                        showToast('해설을 확인하여 정답을 알아보세요.', true);
+                        if (retakeBtn) retakeBtn.classList.remove('hidden');
+                    }
                     checkBtn.disabled = true;
                 });
             }

@@ -1,6 +1,6 @@
 import requests
 
-url = "https://generativelanguage.googleapis.com/v1beta/models?key=AIzaSyA8TbK7c9gH9jR_bw2AxkZliUPfHOgPKew"
+url = "https://generativelanguage.googleapis.com/v1beta/models?key=AIzaSyAB-KXvn4rYu2u6N-52JlDCDSnV2DTPIJ4"
 response = requests.get(url)
 print(response.status_code)
 

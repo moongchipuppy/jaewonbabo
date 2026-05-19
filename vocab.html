@@ -65,6 +65,8 @@
         font-weight: 500;
         border: 1px solid rgba(255,255,255,0.3);
         transition: all 0.2s;
+        z-index: 100;
+        cursor: pointer;
     }
 
     .back-btn:hover {
@@ -216,7 +218,7 @@
 <body>
     <div class="app-container">
         <header>
-            <a href="index.html" class="back-btn">⬅ 뒤로가기</a>
+            <a href="javascript:void(0);" onclick="if(document.referrer && window.history.length > 1) { window.history.back(); } else { window.location.href='index.html'; }" class="back-btn">⬅ 뒤로가기</a>
             <h1>영단어 마스터</h1>
             <p>나만의 영단어장과 테스트</p>
         </header>

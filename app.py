@@ -81,17 +81,19 @@ if show_word_memo:
 
         header h1 {
             font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            font-weight: 800;
+            background: linear-gradient(135deg, #1e3a8a, #581c87);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
         }
 
         header p {
-            color: var(--text-muted);
+            color: #334155;
             font-size: 1.1rem;
+            font-weight: 600;
         }
 
         .card {
@@ -244,7 +246,10 @@ if show_word_memo:
             <div class="card">
                 <div class="section-header">
                     <h2>나의 단어장</h2>
-                    <span class="word-count" id="word-count">총 0개</span>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span class="word-count" id="word-count">총 0개</span>
+                        <button id="delete-all-btn" style="background: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(207, 102, 121, 0.1)'" onmouseout="this.style.background='transparent'">전체 삭제</button>
+                    </div>
                 </div>
                 <div class="word-list-container">
                     <ul id="word-list">
@@ -370,6 +375,16 @@ if show_word_memo:
                 words.splice(index, 1);
                 renderWords();
             };
+
+            const deleteAllBtn = document.getElementById('delete-all-btn');
+            if (deleteAllBtn) {
+                deleteAllBtn.addEventListener('click', () => {
+                    if (words.length > 0 && confirm('단어장의 모든 단어를 정말 삭제하시겠습니까?')) {
+                        words = [];
+                        renderWords();
+                    }
+                });
+            }
 
             addBtn.addEventListener('click', () => {
                 const en = inputEn.value.trim();
